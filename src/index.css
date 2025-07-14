@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+@font-face {
+  font-family: "DepartureMono";
+  src:
+    url("./assets/fonts/DepartureMono-Regular.woff2") format("woff2"),
+    url("./assets/fonts/DepartureMono-Regular.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+
+html,
+body,
+#root {
+  height: 100dvh;
+  font-size: 15px;
+  line-height: 1.8;
+  overflow: hidden;
+  font-family: "DepartureMono", monospace;
+}
+
+body {
+  background-color: theme("colors.neutral.950");
+  color: theme("colors.neutral.200");
+}
+
+input,
+textarea {
+  background-color: theme("colors.neutral.800");
+  color: theme("colors.neutral.200");
+}
+
+button:focus, input:focus, textarea:focus {
+  outline: none;
+}
