@@ -1,6 +1,11 @@
 import { useEffect, useRef } from "react";
 import { idealResolution } from "./consts";
-import { selectedDeviceAtom, devicesAtom, videoSizeAtom } from "./atoms";
+import {
+  selectedDeviceAtom,
+  devicesAtom,
+  videoSizeAtom,
+  stateRef,
+} from "./atoms";
 import { useAtom } from "jotai";
 
 const video = document.createElement("video");
@@ -38,10 +43,16 @@ export function useDevices() {
       video.srcObject = streamRef.current;
       video.onloadedmetadata = () => {
         if (video.videoWidth && video.videoHeight) {
-          setVideoSize({
-            width: video.videoWidth,
-            height: video.videoHeight,
-          });
+          if (
+            !stateRef.videoSize ||
+            stateRef.videoSize.width !== video.videoWidth ||
+            stateRef.videoSize.height !== video.videoHeight
+          ) {
+            setVideoSize({
+              width: video.videoWidth,
+              height: video.videoHeight,
+            });
+          }
         }
       };
     }
@@ -51,7 +62,6 @@ export function useDevices() {
         video.srcObject = null;
         streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
-        setVideoSize(null);
       }
     };
   }, [selectedDevice]);
@@ -70,13 +80,22 @@ export function useDevices() {
           (device) => device.kind === "videoinput",
         );
 
-        console.log("Available video devices:", videoDevices);
-
         setDevices(videoDevices);
 
         if (videoDevices.length > 0) {
-          const initialDeviceId = videoDevices[0].deviceId;
-          setSelectedDevice(initialDeviceId);
+          const storageCheck = localStorage.getItem("selectedDevice");
+          if (storageCheck) {
+            if (videoDevices.some((d) => d.deviceId === storageCheck)) {
+              // if the stored device is still available, use it
+              setSelectedDevice(storageCheck);
+            } else {
+              setSelectedDevice(videoDevices[0].deviceId);
+            }
+          } else {
+            // do not store - only when the user selects a device
+            const initialDeviceId = videoDevices[0].deviceId;
+            setSelectedDevice(initialDeviceId);
+          }
         }
       } catch (e) {
         console.error(e);

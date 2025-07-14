@@ -85,7 +85,7 @@ function TopBar() {
   const [, setShowInfoModal] = useAtom(showInfoModalAtom);
 
   return (
-    <div className="flex z-50 relative select-none justify-center pt-[2ch] pb-[1ch] gap-[2ch]">
+    <div className="flex z-50 select-none relative select-none justify-center pt-[2ch] pb-[1ch] gap-[2ch]">
       <div className="w-[16ch] flex items-center">
         {devices.length === 1 ? (
           <div
@@ -145,7 +145,10 @@ function DeviceSelector() {
     <select
       className="h-[4ch] px-[1ch] w-full bg-neutral-950 text-green-500 border border-green-500 hover:bg-green-500 hover:text-black"
       value={selectedDevice || ""}
-      onChange={(e) => setSelectedDevice(e.target.value)}
+      onChange={(e) => {
+        localStorage.setItem("selectedDevice", e.target.value);
+        setSelectedDevice(e.target.value);
+      }}
     >
       {devices.map((device) => (
         <option
@@ -300,11 +303,6 @@ function Canvas() {
     }, 0);
 
     function drawVideo() {
-      if (!$video || !$video.srcObject || videoSize === null) {
-        ctx!.clearRect(0, 0, renderCanvas!.width, renderCanvas!.height);
-        return;
-      }
-
       if (stateRef.isCapturing) {
         requestAnimationFrame(drawVideo);
         return;
@@ -542,7 +540,9 @@ function useKeyboard() {
             (device) => device.deviceId === selectedDevice,
           );
           const nextIndex = (currentIndex + 1) % devices.length;
-          setSelectedDevice(devices[nextIndex].deviceId);
+          const id = devices[nextIndex].deviceId;
+          localStorage.setItem("selectedDevice", id);
+          setSelectedDevice(id);
         }
       }
     }
