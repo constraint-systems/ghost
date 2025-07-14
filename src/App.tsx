@@ -85,7 +85,7 @@ function TopBar() {
   const [, setShowInfoModal] = useAtom(showInfoModalAtom);
 
   return (
-    <div className="flex z-50 relative justify-center pt-[2ch] pb-[1ch] gap-[2ch]">
+    <div className="flex z-50 relative select-none justify-center pt-[2ch] pb-[1ch] gap-[2ch]">
       <div className="w-[16ch] flex items-center">
         {devices.length === 1 ? (
           <div
@@ -126,7 +126,7 @@ function TopBar() {
         </button>
       </div>
       <button
-        className="w-[4ch] h-[4ch] text-yellow-500 border-yellow-600 hover border rounded-full hover:bg-yellow-500 hover:text-black"
+        className="w-[4ch] h-[4ch] bg-neutral-950 text-yellow-500 border-yellow-600 hover border rounded-full hover:bg-yellow-500 hover:text-black"
         onPointerDown={() => {
           setShowInfoModal((prev) => !prev);
         }}

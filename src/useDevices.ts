@@ -27,7 +27,7 @@ export function useDevices() {
       if (streamRef.current) {
         video.srcObject = null;
         streamRef.current.getTracks().forEach((track) => track.stop());
-        setVideoSize(null);
+        // setVideoSize(null);
       }
       streamRef.current = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -69,6 +69,8 @@ export function useDevices() {
         let videoDevices = devices.filter(
           (device) => device.kind === "videoinput",
         );
+
+        console.log("Available video devices:", videoDevices);
 
         setDevices(videoDevices);
 
