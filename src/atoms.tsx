@@ -12,6 +12,8 @@ export const currentTimeAtom = atom<Date | null>(null);
 export const flippedHorizontallyAtom = atom(true);
 export const flippedVerticallyAtom = atom(false);
 export const showInfoModalAtom = atom(false);
+export const zoomAtom = atom(true);
+export const showDownloadModalAtom = atom(false);
 
 const downloadCanvas = document.createElement("canvas");
 const downloadCtx = downloadCanvas.getContext("2d")!;
@@ -42,4 +44,6 @@ export const stateRef: StateRefType = {
   nowCtx,
   downloadCanvas,
   downloadCtx,
+  zoom: true,
+  showDownloadModal: false,
 };

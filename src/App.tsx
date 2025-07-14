@@ -6,9 +6,11 @@ import {
   flippedVerticallyAtom,
   modeAtom,
   selectedDeviceAtom,
+  showDownloadModalAtom,
   showInfoModalAtom,
   startTimeAtom,
   videoSizeAtom,
+  zoomAtom,
 } from "./atoms";
 import { useEffect, useRef } from "react";
 import { useDevices } from "./useDevices";
@@ -20,12 +22,19 @@ export function App() {
   useDevices();
   useKeyboard();
   useRefUpdater();
+  const [zoom] = useAtom(zoomAtom);
   const [showInfoModal] = useAtom(showInfoModalAtom);
+  const [showDownloadModal] = useAtom(showDownloadModalAtom);
 
   return (
     <div className="w-full relative h-[100dvh] flex flex-col overflow-hidden">
       <TopBar />
-      <div className="grow relative">
+      <div
+        className="grow"
+        style={{
+          position: zoom ? undefined : "relative",
+        }}
+      >
         <Canvas />
       </div>
       <div>
@@ -33,6 +42,7 @@ export function App() {
         <Toolbar />
       </div>
       {showInfoModal && <InfoModal />}
+      {showDownloadModal && <DownloadModal />}
     </div>
   );
 }
@@ -51,7 +61,7 @@ function Timestamps() {
   }, []);
 
   return (
-    <div className="flex gap-[1ch] justify-center text-neutral-500 pt-[1ch] pb-[0.5ch] w-full px-[1ch]">
+    <div className="flex relative gap-[1ch] justify-center text-neutral-500 pt-[1ch] pb-[0.5ch] w-full px-[1ch]">
       {startTime && currentTime && (
         <>
           <div>{startTime ? formatDate(startTime) : null}</div>
@@ -65,6 +75,7 @@ function Timestamps() {
 
 function TopBar() {
   const [devices] = useAtom(devicesAtom);
+  const [zoom, setZoom] = useAtom(zoomAtom);
   const [flippedHorizontally, setFlippedHorizontally] = useAtom(
     flippedHorizontallyAtom,
   );
@@ -74,8 +85,8 @@ function TopBar() {
   const [, setShowInfoModal] = useAtom(showInfoModalAtom);
 
   return (
-    <div className="flex justify-center pt-[2ch] pb-[1ch] gap-[2ch]">
-      <div className="w-[23ch] flex items-center">
+    <div className="flex z-50 relative justify-center pt-[2ch] pb-[1ch] gap-[2ch]">
+      <div className="w-[16ch] flex items-center">
         {devices.length === 1 ? (
           <div
             className="h-[4ch] px-[1ch] w-full flex items-center text-green-500"
@@ -89,12 +100,21 @@ function TopBar() {
       </div>
       <div className="flex gap-px px-px py-px text-center bg-blue-600">
         <button
+          className={`w-[4ch] h-[4ch] ${zoom ? "bg-blue-600 text-black hover:bg-blue-500" : "bg-black text-blue-500 hover:bg-blue-500 hover:text-black"}`}
+          onPointerDown={() => {
+            setZoom(!zoom);
+          }}
+        >
+          ✧
+        </button>
+
+        <button
           className={`w-[4ch] h-[4ch] ${flippedHorizontally ? "bg-blue-600 text-black hover:bg-blue-500" : "bg-black text-blue-500 hover:bg-blue-500 hover:text-black"}`}
           onPointerDown={() => {
             setFlippedHorizontally(!flippedHorizontally);
           }}
         >
-          ►
+          ▷
         </button>
         <button
           className={`w-[4ch] h-[4ch] ${flippedVertically ? "bg-blue-600 text-black hover:bg-blue-500" : "bg-black text-blue-500 hover:bg-blue-500 hover:text-black"}`}
@@ -102,7 +122,7 @@ function TopBar() {
             setFlippedVertically(!flippedVertically);
           }}
         >
-          ▼
+          ▽
         </button>
       </div>
       <button
@@ -170,30 +190,31 @@ function useDrawBase() {
 
 function useCaptureDownload() {
   return function captureDownload() {
-    stateRef.isCapturing = true;
-    const link = document.createElement("a");
+    // stateRef.isCapturing = true;
+    // const link = document.createElement("a");
     const renderCanvas = document.getElementById(
       "render-canvas",
     ) as HTMLCanvasElement;
     if (!renderCanvas) return;
     stateRef.downloadCtx.drawImage(renderCanvas, 0, 0);
-    link.download = `ghost-${new Date().toISOString()}.png`;
-    link.href = stateRef.downloadCanvas.toDataURL("image/jpg");
-    link.click();
-    setTimeout(() => {
-      stateRef.isCapturing = false;
-    }, 1000); // Allow some time for the download to complete
+    // link.download = `ghost-${new Date().toISOString()}.png`;
+    // link.href = stateRef.downloadCanvas.toDataURL("image/jpg");
+    // link.click();
+    // setTimeout(() => {
+    //   stateRef.isCapturing = false;
+    // }, 1000); // Allow some time for the download to complete
   };
 }
 
 function Toolbar() {
   const drawBase = useDrawBase();
   const captureDownload = useCaptureDownload();
+  const [, setShowDownloadModal] = useAtom(showDownloadModalAtom);
 
   return (
-    <div className="flex justify-center select-none items-center gap-[2ch] px-[1ch] pb-[3ch] pt-[1ch]">
+    <div className="flex relative justify-center select-none items-center gap-[3ch] px-[1ch] pb-[3ch] pt-[1ch]">
       <button
-        className="h-[8ch] w-[8ch] bg-green-600 text-black hover:bg-green-500 rounded-full"
+        className="h-[6ch] w-[6ch] bg-green-600 text-black hover:bg-green-500 rounded-full"
         onClick={() => {
           drawBase();
         }}
@@ -202,9 +223,10 @@ function Toolbar() {
       </button>
       <ModeChooser />
       <button
-        className="h-[7.625ch] w-[7.625ch] bg-purple-600 text-black hover:bg-purple-500"
+        className="h-[6ch] w-[6ch] bg-purple-600 text-black hover:bg-purple-500"
         onPointerDown={() => {
           captureDownload();
+          setShowDownloadModal((prev) => !prev);
         }}
       >
         ↓
@@ -224,7 +246,8 @@ function ModeChooser() {
         ["screen", "S"],
       ].map(([itemMode, itemLabel]) => (
         <button
-          className={`w-[6ch] h-[6ch] ${mode === itemMode ? "bg-blue-600 text-neutral-950" : "bg-neutral-950 text-blue-500 hover:bg-blue-500 hover:text-neutral-950"}`}
+          key={itemMode}
+          className={`w-[5ch] h-[5ch] ${mode === itemMode ? "bg-blue-600 text-neutral-950" : "bg-neutral-950 text-blue-500 hover:bg-blue-500 hover:text-neutral-950"}`}
           onPointerDown={() => setMode(itemMode as ModeType)}
         >
           {itemLabel}
@@ -239,6 +262,7 @@ function Canvas() {
   const [mode] = useAtom(modeAtom);
   const [flippedHorizontally] = useAtom(flippedHorizontallyAtom);
   const [flippedVertically] = useAtom(flippedVerticallyAtom);
+  const [zoom] = useAtom(zoomAtom);
   const renderCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawBase = useDrawBase();
 
@@ -314,7 +338,10 @@ function Canvas() {
     <canvas
       ref={renderCanvasRef}
       id="render-canvas"
-      className="absolute top-0 left-0 w-full h-full object-contain"
+      className="absolute top-0 left-0 w-full h-full"
+      style={{
+        objectFit: zoom ? "cover" : "contain",
+      }}
       width={videoSize.width}
       height={videoSize.height}
     />
@@ -374,6 +401,94 @@ function InfoModal() {
   );
 }
 
+function DownloadModal() {
+  const [, setShowInfoModal] = useAtom(showInfoModalAtom);
+  const [, setShowDownloadModal] = useAtom(showDownloadModalAtom);
+  const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [videoSize] = useAtom(videoSizeAtom);
+
+  useEffect(() => {
+    const previewCanvas = previewCanvasRef.current;
+    if (!previewCanvas || !videoSize) return;
+
+    const previewCtx = previewCanvas.getContext("2d");
+    previewCanvas.width = videoSize.width;
+    previewCanvas.height = videoSize.height;
+
+    previewCtx!.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+    const downloadCanvas = stateRef.downloadCanvas;
+    if (downloadCanvas) {
+      previewCtx!.drawImage(
+        downloadCanvas,
+        0,
+        0,
+        videoSize.width,
+        videoSize.height,
+      );
+    }
+  }, [videoSize]);
+
+  return (
+    <div
+      className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 flex items-center justify-center"
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) {
+          setShowInfoModal(false);
+          setShowDownloadModal(false);
+        }
+      }}
+    >
+      <div
+        className="bg-neutral-950 w-full pointer-events-auto border border-purple-500 px-[2ch] py-[0.5lh] bg-opacity-90"
+        onPointerDown={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        <div className="flex mb-[0.5ch] justify-between">
+          <div className="text-purple-500">DOWNLOAD</div>
+          <button
+            className="text-purple-500 px-[1ch] hover:bg-purple-500 hover:text-black"
+            onClick={() => {
+              setShowDownloadModal(false);
+            }}
+          >
+            X
+          </button>
+        </div>
+        <canvas
+          ref={previewCanvasRef}
+          id="download-canvas"
+          className="w-full mb-[0.5lh]"
+          width={videoSize!.width}
+          height={videoSize!.height}
+        />
+        <div className="flex mb-[0.5ch] justify-center gap-[1ch]">
+          <button
+            className="text-purple-500 h-[4ch] px-[1ch] hover:bg-purple-500 hover:text-black"
+            onClick={() => {
+              setShowDownloadModal(false);
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            className="bg-purple-600 h-[4ch] px-[1ch] hover:bg-purple-500 text-black"
+            onClick={() => {
+              const link = document.createElement("a");
+              link.download = `ghost-${new Date().toISOString()}.png`;
+              link.href = stateRef.downloadCanvas.toDataURL("image/png");
+              link.click();
+              setShowDownloadModal(false);
+            }}
+          >
+            Download
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function useKeyboard() {
   const [, setShowInfoModal] = useAtom(showInfoModalAtom);
   const [flippedHorizontally, setFlippedHorizontally] = useAtom(
@@ -385,6 +500,10 @@ function useKeyboard() {
   const [devices] = useAtom(devicesAtom);
   const [selectedDevice, setSelectedDevice] = useAtom(selectedDeviceAtom);
   const [, setMode] = useAtom(modeAtom);
+  const captureDownload = useCaptureDownload();
+  const [showDownloadModal, setShowDownloadModal] = useAtom(
+    showDownloadModalAtom,
+  );
   const drawBase = useDrawBase();
 
   useEffect(() => {
@@ -393,12 +512,24 @@ function useKeyboard() {
         setShowInfoModal((prev) => !prev);
       } else if (event.key === "Escape") {
         setShowInfoModal(false);
+        setShowDownloadModal(false);
       } else if (event.key === "h") {
         setFlippedHorizontally(!flippedHorizontally);
       } else if (event.key === "v") {
         setFlippedVertically(!flippedVertically);
       } else if (event.key === " ") {
         drawBase();
+      } else if (event.key === "Enter") {
+        captureDownload();
+        if (showDownloadModal) {
+          const link = document.createElement("a");
+          link.download = `ghost-${new Date().toISOString()}.png`;
+          link.href = stateRef.downloadCanvas.toDataURL("image/png");
+          link.click();
+          setShowDownloadModal(false);
+        } else {
+          setShowDownloadModal((prev) => !prev);
+        }
       } else if (event.key === "m") {
         setMode("multiply");
       } else if (event.key === "d") {
@@ -422,6 +553,7 @@ function useKeyboard() {
     setShowInfoModal,
     flippedHorizontally,
     flippedVertically,
+    showDownloadModal,
     devices,
     selectedDevice,
     setSelectedDevice,
@@ -438,6 +570,8 @@ function useRefUpdater() {
   const [flippedHorizontally] = useAtom(flippedHorizontallyAtom);
   const [flippedVertically] = useAtom(flippedVerticallyAtom);
   const [showInfoModal] = useAtom(showInfoModalAtom);
+  const [zoom] = useAtom(zoomAtom);
+  const [showDownloadModal] = useAtom(showDownloadModalAtom);
 
   useEffect(() => {
     stateRef.devices = devices;
@@ -449,6 +583,8 @@ function useRefUpdater() {
     stateRef.flippedHorizontally = flippedHorizontally;
     stateRef.flippedVertically = flippedVertically;
     stateRef.showInfoModal = showInfoModal;
+    stateRef.zoom = zoom;
+    stateRef.showDownloadModal = showDownloadModal;
   }, [
     devices,
     selectedDevice,
@@ -459,5 +595,7 @@ function useRefUpdater() {
     flippedHorizontally,
     flippedVertically,
     showInfoModal,
+    showDownloadModal,
+    zoom,
   ]);
 }

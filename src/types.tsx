@@ -22,4 +22,6 @@ export type StateRefType = {
   nowCtx: CanvasRenderingContext2D;
   downloadCanvas: HTMLCanvasElement;
   downloadCtx: CanvasRenderingContext2D;
+  zoom: boolean;
+  showDownloadModal: boolean;
 }
