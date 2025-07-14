@@ -1,4 +1,4 @@
-# Sampler
+# Ghost
 
 `npm install`
 `npm run dev`
